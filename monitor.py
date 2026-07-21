@@ -47,7 +47,6 @@ def fetch_pslsource_listings(team_id: int):
     resp = requests.post(url, headers=HEADERS, timeout=REQUEST_TIMEOUT)
     resp.raise_for_status()
     payload = resp.json()
-    # Response shape observed: {"data": [ {...listing...}, ... ], "total_count": N}
     return payload.get("data", [])
 
 
@@ -93,6 +92,7 @@ def send_discord_alert(site: str, team_name: str, description: str, listing_id):
 
 def process_team(site: str, team_name: str, listings: list, describe_fn, state: dict):
     key = f"{site}:{team_name}"
+    is_first_time_seeing_this_team = key not in state
     seen_ids = set(state.get(key, []))
     current_ids = set()
     new_count = 0
@@ -103,10 +103,13 @@ def process_team(site: str, team_name: str, listings: list, describe_fn, state: 
             continue
         current_ids.add(listing_id)
         if listing_id not in seen_ids:
-            description = describe_fn(listing)
-            print(f"  [new] {team_name}: {description}")
-            send_discord_alert(site, team_name, description, listing_id)
-            new_count += 1
+            if is_first_time_seeing_this_team:
+                print(f"  [baseline] {team_name}: recording listing {listing_id}")
+            else:
+                description = describe_fn(listing)
+                print(f"  [new] {team_name}: {description}")
+                send_discord_alert(site, team_name, description, listing_id)
+                new_count += 1
 
     state[key] = list(current_ids)
     return new_count
