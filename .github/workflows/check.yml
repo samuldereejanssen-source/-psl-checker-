@@ -1,0 +1,37 @@
+name: PSL Drop Checker
+
+on:
+  schedule:
+    - cron: "*/10 * * * *"   # every 10 minutes, 24/7 (edit to change frequency)
+  workflow_dispatch: {}       # lets you also click "Run workflow" manually on GitHub
+
+permissions:
+  contents: write
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repo
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Run checker
+        env:
+          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
+        run: python monitor.py
+
+      - name: Save updated state back to the repo
+        run: |
+          git config user.name "psl-checker-bot"
+          git config user.email "actions@github.com"
+          git add state.json
+          git diff --staged --quiet || git commit -m "Update listing state [skip ci]"
+          git push
