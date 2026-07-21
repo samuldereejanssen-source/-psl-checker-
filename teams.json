@@ -1,0 +1,8 @@
+{
+  "pslsource_teams": [
+    { "name": "Atlanta Falcons", "team_id": 1 }
+  ],
+  "strmarketplace_teams": [
+    { "name": "Las Vegas Raiders", "code": "F02E65F", "subdomain": "raiders" }
+  ]
+}
